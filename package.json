@@ -5,7 +5,7 @@
     "glance": "./index.js"
   },
   "version": "0.0.0",
-  "description": "manage your environment",
+  "description": "braaain",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -17,5 +17,9 @@
     "environment"
   ],
   "author": "jesse keane",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "colorize": "~0.1.0",
+    "optimist": "~0.6.0"
+  }
 }

@@ -8,6 +8,8 @@ var c_proc = require('child_process'),
 
 function Krang() {
   this.configuration = this.load_config()
+  this.static_processes = []
+  this.dynamic_processes = []
 
   return this
 }
@@ -21,3 +23,5 @@ Krang.prototype.load_config = function () {
     return {}
   }
 }
+
+Krang.prototype.start
