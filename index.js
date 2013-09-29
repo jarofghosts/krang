@@ -29,8 +29,23 @@ Krang.prototype.start = function () {
   this.emit('started')
 }
 
+Krang.prototype.refresh = function () {
+}
+
 Krang.prototype.stop = function () {
   this.emit('stopped')
+}
+
+Krang.prototype.kill_process = function (process, cb) {
+  var sigkill_timeout = setTimeout(send_kill.bind(this, process), 1500)
+  process.once('close', function () {
+    sigkill_timeout && clearTimeout(sigkill_timeout)
+    return cb(null, true)
+  })
+  function send_kill(process) {
+    sigkill_timeout = 0
+    process.kill('SIGKILL')
+  }
 }
 
 Krang.prototype.restart = function () {
