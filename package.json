@@ -1,5 +1,9 @@
 {
   "name": "krang",
+  "preferGlobal": true,
+  "bin": {
+    "glance": "./index.js"
+  },
   "version": "0.0.0",
   "description": "manage your environment",
   "main": "index.js",
