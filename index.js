@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var c_proc = require('child_process'),
+var spawn = require('child_process').spawn,
     util = require('util'),
     path = require('path'),
     EE = require('events').EventEmitter,
@@ -26,14 +26,25 @@ function Krang(dir) {
 util.inherits(Krang, EE)
 
 Krang.prototype.start = function () {
+  
   this.emit('started')
 }
 
 Krang.prototype.refresh = function () {
+
 }
 
 Krang.prototype.stop = function () {
-  this.emit('stopped')
+  var all_processes = this.static_processes.concat(this.dynamic_processes),
+      countdown = all_processes.length
+
+  for (var i = 0; i < countdown; ++i) {
+    this.kill_process(all_processes[i], count_kill.bind(this))
+  }
+
+  function count_kill() {
+    !--countdown && this.emit('stopped')
+  }
 }
 
 Krang.prototype.kill_process = function (process, cb) {
