@@ -21,6 +21,7 @@
   "dependencies": {
     "colorize": "~0.1.0",
     "optimist": "~0.6.0",
-    "levelup": "~0.16.0"
+    "levelup": "~0.16.0",
+    "leveldown": "~0.8.3"
   }
 }

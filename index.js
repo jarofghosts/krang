@@ -15,6 +15,9 @@ function load_config(dir) {
     return {}
   }
 }
+function load_db() {
+  return levelup(path.join(path.normalize(process.env.HOME || process.env.USERPROFILE), '.krang'))
+}
 
 function Krang(dir) {
   this.dir = dir || process.cwd()
@@ -31,14 +34,10 @@ function Krang(dir) {
 
 util.inherits(Krang, EE)
 
-Krang.prototype.load_db = function () {
-  return levelup(path.join(path.normalize(process.env.HOME || process.env.USERPROFILE), '.krang'))
-}
-
 Krang.prototype.start = function () {
   if (this.running) return this.error('Already running')
   this.running = true
-  var processes = Object.keys(this.config.processes),
+  var processes = Object.keys(this.config.processes || {}),
       process_list = this.config.processes
   for (var i = 0, l = processes.length; i < l; ++i) {
     var process_name = processes[i],
@@ -136,5 +135,5 @@ Krang.prototype.restart = function () {
 
 if (is_cli) {
   var argv = require('optimist').argv
-  new Krang(process.cwd()).start()
+  new Krang().start()
 }
