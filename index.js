@@ -130,4 +130,5 @@ Krang.prototype.restart = function () {
 
 if (is_cli) {
   var argv = require('optimist').argv
+  new Krang(process.cwd()).start()
 }
