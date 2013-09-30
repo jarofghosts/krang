@@ -2,6 +2,7 @@
 
 var spawn = require('child_process').spawn,
     util = require('util'),
+    levelup = require('levelup')
     fs = require('fs'),
     path = require('path'),
     EE = require('events').EventEmitter,
@@ -9,7 +10,7 @@ var spawn = require('child_process').spawn,
 
 function load_config(dir) {
   try {
-    return require(path.resolve(dir, '.krang.json'))
+    return require(path.join(path.normalize(dir), '.krang.json'))
   } catch (e) {
     return {}
   }
@@ -18,6 +19,7 @@ function load_config(dir) {
 function Krang(dir) {
   this.dir = dir || process.cwd()
   this.config = load_config(this.dir)
+  this.db = load_db()
   this.static_processes = {}
   this.dynamic_processes = {}
   this.current_environment = this.config.environment || {}
@@ -28,6 +30,10 @@ function Krang(dir) {
 }
 
 util.inherits(Krang, EE)
+
+Krang.prototype.load_db = function () {
+  return levelup(path.join(path.normalize(process.env.HOME || process.env.USERPROFILE), '.krang'))
+}
 
 Krang.prototype.start = function () {
   if (this.running) return this.error('Already running')
