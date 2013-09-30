@@ -4,6 +4,13 @@
   "bin": {
     "glance": "./index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jarofghosts/krang.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jarofghosts/krang/issues"
+  },
   "version": "0.0.0",
   "description": "braaain",
   "main": "index.js",
