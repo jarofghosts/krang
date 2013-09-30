@@ -17,8 +17,8 @@ function load_config(dir) {
 function Krang(dir) {
   this.dir = dir || process.cwd()
   this.config = load_config(this.dir)
-  this.static_processes = []
-  this.dynamic_processes = []
+  this.static_processes = {}
+  this.dynamic_processes = {}
   this.current_environment = this.config.environment || {}
   this.name = this.config.name || this.dir
   this.running = false
@@ -36,18 +36,26 @@ Krang.prototype.start = function () {
         command = this_process.command.split(' '),
         type = this_process.type || 'run_once'
         cmd_options = {}
-    cmd_options.env = this.current_environment
     this_process.working_dir && cmd_options.cwd = this_process.working_dir
     this_process.user_id && cmd_options.uid = this_process.user_id
     this_process.group_id && cmd_options.gid = this_process.group_id
 
-    var spawned = spawn(command[0], command.splice(1), cmd_options)
-    if (type == 'static' || type == 'dynamic') this.register(this_process.name || this_process.command, type, spawned)
+    this.start_process(name, command, cmd_options, type)
   }
   this.emit('started')
 }
 
-Krang.prototype.register_process = function (process_name, 
+Krang.prototype.start_process = function (name, command, options, type) {
+  name = name || command.join(' ')
+  options.env = this.current_environment
+  var spawned = spawn(command[0], command.splice(1), options)
+  if (type == 'dynamic' || type == 'static') this.register(name, command, options, type, spawned)
+}
+
+Krang.prototype.register_process = function (name, command, options, type, process) {
+  this[type + '_processes'][name] = process
+  process.on('close', start_process.bind(this, name, command, options, type))
+}
 
 Krang.prototype.error = function (err_string) {
   this.emit('error', new Error(err_string))
