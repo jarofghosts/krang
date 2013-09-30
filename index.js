@@ -2,6 +2,7 @@
 
 var spawn = require('child_process').spawn,
     util = require('util'),
+    fs = require('fs'),
     path = require('path'),
     EE = require('events').EventEmitter,
     is_cli = (require.main === module)
@@ -31,8 +32,11 @@ util.inherits(Krang, EE)
 Krang.prototype.start = function () {
   if (this.running) return this.error('Already running')
   this.running = true
-  for (var i = 0, l = this.config.processes.length; i < l; ++i) {
-    var this_process = this.config.processes[i],
+  var processes = Object.keys(this.config.processes),
+      process_list = this.config.processes
+  for (var i = 0, l = processes.length; i < l; ++i) {
+    var process_name = processes[i],
+        this_process = process_list[process_name],
         command = this_process.command.split(' '),
         type = this_process.type || 'run_once'
         cmd_options = {}
@@ -40,21 +44,37 @@ Krang.prototype.start = function () {
     this_process.user_id && cmd_options.uid = this_process.user_id
     this_process.group_id && cmd_options.gid = this_process.group_id
 
-    this.start_process(name, command, cmd_options, type)
+    this.start_process(process_name, command, cmd_options, type)
   }
   this.emit('started')
 }
 
 Krang.prototype.start_process = function (name, command, options, type) {
-  name = name || command.join(' ')
   options.env = this.current_environment
   var spawned = spawn(command[0], command.splice(1), options)
-  if (type == 'dynamic' || type == 'static') this.register(name, command, options, type, spawned)
+  this.register(name, command, options, type, spawned)
 }
 
 Krang.prototype.register_process = function (name, command, options, type, process) {
-  this[type + '_processes'][name] = process
-  process.on('close', start_process.bind(this, name, command, options, type))
+  if (type == 'dynamic' || type == 'static') {
+    this[type + '_processes'][name] = process
+    process.on('close', start_process.bind(this, name, command, options, type))
+  }
+  process.stdout.on('data', this.log_process.bind(this, name, 'out'))
+  process.stderr.on('data', this.log_process.bind(this, name, 'error'))
+}
+
+Krang.prototype.change_var = function (env_key, value) {
+  this.current_environment[env_key] = value
+  this.refresh()
+}
+
+Krang.prototype.log_process = function (name, type, data) {
+  if (!this.config.log || !!this.config.processes[name].no_log) return
+  var filename = path.resolve(this.dir, '.krang', name + '.log'),
+      filedata = '[' + type.toUpperCase() + '] ' + data
+  fs.appendFile(filename, filedata)
+  this.emit('logged', name, filedata)
 }
 
 Krang.prototype.error = function (err_string) {
@@ -62,17 +82,28 @@ Krang.prototype.error = function (err_string) {
 }
 
 Krang.prototype.refresh = function () {
+  var processes = Object.keys(this.dynamic_processes),
+      countdown = processes.length
+  for (var i = 0; i < countdown; ++i) {
+    var name = processes[i]
+    this.kill_process(this.dynamic_processes[name], count_kill.bind(this))
+  }
 
+  function count_kill() {
+    !--countdown && this.emit('refreshed')
+  }
 }
 
 Krang.prototype.stop = function () {
-  var all_processes = this.static_processes.concat(this.dynamic_processes),
-      countdown = all_processes.length
+  var names = Object.keys(this.dynamic_processes).concat(Object.keys(this.static_processes))
+      countdown = names.length
 
   this.once('stopped', function () { this.running = false }.bind(this))
 
   for (var i = 0; i < countdown; ++i) {
-    this.kill_process(all_processes[i], count_kill.bind(this))
+    var process_name = names[i],
+        process = this.dynamic_processes[process_name] || this.static_processes[process_name]
+    this.kill_process(process, count_kill.bind(this))
   }
 
   function count_kill() {
@@ -94,6 +125,7 @@ Krang.prototype.kill_process = function (process, cb) {
 
 Krang.prototype.restart = function () {
   this.once('stopped', this.start.bind(this))
+  this.stop()
 }
 
 if (is_cli) {
