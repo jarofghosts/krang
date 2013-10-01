@@ -52,7 +52,7 @@ Krang.prototype.start = function () {
         this_process = process_list[process_name],
         command = this_process.command.split(' '),
         type = this_process.type || 'run_once'
-        cmd_options = { detached: true }
+        cmd_options = {}
     this_process.working_dir && (cmd_options.cwd = this_process.working_dir)
     this_process.user_id && (cmd_options.uid = this_process.user_id)
     this_process.group_id && (cmd_options.gid = this_process.group_id)
@@ -64,10 +64,6 @@ Krang.prototype.start = function () {
 
 Krang.prototype.start_process = function (name, command, options, type) {
   options.env = this.current_environment
-  var stdio = this.config.log && !this.config.processes[name].no_log ? ['ignore',
-                                  fs.openSync('./.krang/' + name + '.log', 'a'),
-                                  fs.openSync('./.krang/' + name + '.err', 'a')] :
-                                  [ 'ignore', 'ignore', 'ignore' ]
   var spawned = spawn(command[0], command.splice(1), options)
   this.register_process(name, command, options, type, spawned)
 }
@@ -78,6 +74,8 @@ Krang.prototype.register_process = function (name, command, options, type, proce
     process.on('close', start_process.bind(this, name, command, options, type))
   }
   process.on('error', function (err) { console.dir(err) })
+  process.stdout.on('data', this.log_process.bind(this, name, 'out'))
+  process.stderr.on('data', this.log_process.bind(this, name, 'error'))
 }
 
 Krang.prototype.change_var = function (env_key, value) {
