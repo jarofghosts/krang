@@ -67,6 +67,7 @@ Krang.prototype.register_process = function (name, command, options, type, proce
     this[type + '_processes'][name] = process
     process.on('close', start_process.bind(this, name, command, options, type))
   }
+  process.on('error', function (err) { console.dir(err) })
   process.stdout.on('data', this.log_process.bind(this, name, 'out'))
   process.stderr.on('data', this.log_process.bind(this, name, 'error'))
 }
