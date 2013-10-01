@@ -19,7 +19,13 @@ function load_config(dir) {
 function load_db() {
   return levelup(path.join(path.normalize(process.env.HOME || process.env.USERPROFILE), '.krang'))
 }
-
+function timestamp() {
+  var date = new Date(),
+      hour = ('0' + date.getHours()).slice(-2),
+      minutes = ('0' + date.getMinutes()).slice(-2),
+      seconds = ('0' + date.getSeconds()).slice(-2),
+  return ['[', hour, ':', minutes, ':', seconds, ']'].join('')
+}
 function Krang(dir) {
   this.dir = dir || process.cwd()
   this.config = load_config(this.dir)
@@ -80,7 +86,7 @@ Krang.prototype.change_var = function (env_key, value) {
 Krang.prototype.log_process = function (name, type, data) {
   if (!this.config.log || !!this.config.processes[name].no_log) return
   var filename = path.resolve(this.dir, '.krang', name + '.log'),
-      filedata = '[' + type.toUpperCase() + '] ' + data
+      filedata = timestamp() + ' [' + type.toUpperCase() + '] ' + data + '[END]'
   fs.appendFile(filename, filedata)
   this.emit('logged', name, filedata)
 }
