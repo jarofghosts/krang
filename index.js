@@ -53,13 +53,14 @@ Krang.prototype.start = function () {
         command = this_process.command.split(' '),
         type = this_process.type || 'run_once'
         cmd_options = {}
-    this_process.working_dir && (cmd_options.cwd = this_process.working_dir)
+    this_process.working_dir && (cmd_options.cwd = path.resolve(process.cwd(), this_process.working_dir))
     this_process.user_id && (cmd_options.uid = this_process.user_id)
     this_process.group_id && (cmd_options.gid = this_process.group_id)
 
     this.start_process(process_name, command, cmd_options, type)
   }
   this.emit('started')
+  setInterval(function () {}, 100)
 }
 
 Krang.prototype.start_process = function (name, command, options, type) {
@@ -68,14 +69,14 @@ Krang.prototype.start_process = function (name, command, options, type) {
   this.register_process(name, command, options, type, spawned)
 }
 
-Krang.prototype.register_process = function (name, command, options, type, process) {
+Krang.prototype.register_process = function (name, command, options, type, the_process) {
   if (type == 'dynamic' || type == 'static') {
-    this[type + '_processes'][name] = process
+    this[type + '_processes'][name] = the_process
     process.on('close', this.start_process.bind(this, name, command, options, type))
   }
-  process.on('error', function (err) { console.dir(err) })
-  process.stdout.on('data', this.log_process.bind(this, name, 'out'))
-  process.stderr.on('data', this.log_process.bind(this, name, 'error'))
+  the_process.on('error', function (err) { console.dir(err) })
+  the_process.stdout.on('data', this.log_process.bind(this, name, 'out'))
+  the_process.stderr.on('data', this.log_process.bind(this, name, 'error'))
   console.log('registered ' + name)
 }
 
@@ -126,15 +127,15 @@ Krang.prototype.stop = function () {
   }
 }
 
-Krang.prototype.kill_process = function (process, cb) {
+Krang.prototype.kill_process = function (the_process, cb) {
   var sigkill_timeout = setTimeout(send_kill.bind(this, process), 1500)
-  process.once('close', function () {
+  the_process.once('close', function () {
     sigkill_timeout && clearTimeout(sigkill_timeout)
     return cb(null, true)
   })
   function send_kill(process) {
     sigkill_timeout = 0
-    process.kill('SIGKILL')
+    the_process.kill('SIGKILL')
   }
 }
 
