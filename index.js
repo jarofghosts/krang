@@ -77,7 +77,6 @@ Krang.prototype.register_process = function (name, command, options, type, the_p
   the_process.on('error', function (err) { console.dir(err) })
   the_process.stdout.on('data', this.log_process.bind(this, name, 'out'))
   the_process.stderr.on('data', this.log_process.bind(this, name, 'error'))
-  console.log('registered ' + name)
 }
 
 Krang.prototype.change_var = function (env_key, value) {
